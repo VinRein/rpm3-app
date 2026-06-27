@@ -61,7 +61,7 @@ export function ResultView({ resultId }: ResultViewProps) {
   };
 
   return (
-    <div className="min-h-screen p-8 max-w-4xl mx-auto">
+    <div className="min-h-screen px-4 py-6 md:px-8 md:py-8 max-w-4xl mx-auto">
       {/* Result header */}
       <div className="mb-8">
         <div className="flex items-start gap-3 mb-1">
@@ -121,28 +121,30 @@ export function ResultView({ resultId }: ResultViewProps) {
         )}
       </div>
 
-      {/* Step tabs */}
-      <div
-        className="flex gap-1 p-1 rounded-xl mb-6 w-fit"
-        style={{ background: "var(--surface)" }}
-      >
-        {STEPS.map((step, i) => {
-          const active = activeStep === step.id;
-          return (
-            <button
-              key={step.id}
-              onClick={() => setActiveStep(step.id)}
-              className={clsx(
-                "flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150",
-                active ? "text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text)]"
-              )}
-              style={active ? { background: result.color ?? "var(--accent)" } : {}}
-            >
-              <span className="text-xs opacity-60 font-mono">{i + 2}</span>
-              {step.label}
-            </button>
-          );
-        })}
+      {/* Step tabs — horizontally scrollable on mobile */}
+      <div className="overflow-x-auto -mx-4 md:mx-0 mb-6">
+        <div
+          className="flex gap-1 p-1 rounded-xl w-fit mx-4 md:mx-0"
+          style={{ background: "var(--surface)" }}
+        >
+          {STEPS.map((step, i) => {
+            const active = activeStep === step.id;
+            return (
+              <button
+                key={step.id}
+                onClick={() => setActiveStep(step.id)}
+                className={clsx(
+                  "flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap",
+                  active ? "text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text)]"
+                )}
+                style={active ? { background: result.color ?? "var(--accent)" } : {}}
+              >
+                <span className="text-xs opacity-60 font-mono">{i + 2}</span>
+                {step.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* AI assist */}

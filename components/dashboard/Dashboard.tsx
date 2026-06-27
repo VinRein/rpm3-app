@@ -37,7 +37,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="px-4 py-6 md:px-8 md:py-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold" style={{ color: "var(--text)" }}>
