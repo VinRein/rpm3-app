@@ -4,6 +4,8 @@ import { useRPMStore } from "@/lib/store";
 import { Button } from "@/components/ui/Button";
 import { Bot, X, Send, Trash2, Sparkles } from "lucide-react";
 import clsx from "clsx";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const CONTEXT_PROMPTS: Record<string, string> = {
   result: "Help me define a clear, powerful Result — a specific outcome I want to achieve.",
@@ -208,9 +210,7 @@ export function AISidebar() {
             key={msg.id}
             className={clsx(
               "text-sm rounded-xl px-3 py-2.5 max-w-[90%]",
-              msg.role === "user"
-                ? "ml-auto text-right"
-                : "mr-auto"
+              msg.role === "user" ? "ml-auto text-right" : "mr-auto"
             )}
             style={
               msg.role === "user"
@@ -218,7 +218,84 @@ export function AISidebar() {
                 : { background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }
             }
           >
-            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+            {msg.role === "user" ? (
+              <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+            ) : (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({ children }) => (
+                    <p className="leading-relaxed mb-2 last:mb-0">{children}</p>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="font-semibold" style={{ color: "var(--text)" }}>{children}</strong>
+                  ),
+                  em: ({ children }) => (
+                    <em className="italic" style={{ color: "var(--text-muted)" }}>{children}</em>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="my-2 space-y-1 pl-4 list-disc" style={{ color: "var(--text)" }}>{children}</ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="my-2 space-y-1 pl-4 list-decimal" style={{ color: "var(--text)" }}>{children}</ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="leading-relaxed">{children}</li>
+                  ),
+                  h1: ({ children }) => (
+                    <h1 className="font-bold text-base mb-2 mt-3 first:mt-0" style={{ color: "var(--text)" }}>{children}</h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="font-semibold text-sm mb-1.5 mt-3 first:mt-0" style={{ color: "var(--text)" }}>{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="font-semibold text-sm mb-1 mt-2 first:mt-0" style={{ color: "var(--text-muted)" }}>{children}</h3>
+                  ),
+                  hr: () => (
+                    <hr className="my-3" style={{ borderColor: "var(--border)" }} />
+                  ),
+                  code: ({ children }) => (
+                    <code
+                      className="px-1.5 py-0.5 rounded text-xs font-mono"
+                      style={{ background: "var(--surface-3)", color: "var(--accent)" }}
+                    >
+                      {children}
+                    </code>
+                  ),
+                  table: ({ children }) => (
+                    <div className="overflow-x-auto my-3">
+                      <table className="w-full text-xs border-collapse" style={{ borderColor: "var(--border)" }}>
+                        {children}
+                      </table>
+                    </div>
+                  ),
+                  thead: ({ children }) => (
+                    <thead style={{ background: "var(--surface-3)" }}>{children}</thead>
+                  ),
+                  th: ({ children }) => (
+                    <th
+                      className="text-left px-2 py-1.5 font-semibold border"
+                      style={{ borderColor: "var(--border)", color: "var(--text)" }}
+                    >
+                      {children}
+                    </th>
+                  ),
+                  td: ({ children }) => (
+                    <td
+                      className="px-2 py-1.5 border"
+                      style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+                    >
+                      {children}
+                    </td>
+                  ),
+                  tr: ({ children }) => (
+                    <tr style={{ borderColor: "var(--border)" }}>{children}</tr>
+                  ),
+                }}
+              >
+                {msg.content}
+              </ReactMarkdown>
+            )}
           </div>
         ))}
 
