@@ -464,12 +464,14 @@ export function DailyRitual() {
   const today = new Date().toISOString().slice(0, 10);
   const focus = getTodayFocus3();
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
   // Local draft — editing = reflection is empty (user clicked "Edit") or not yet saved
   const [editingReflection, setEditingReflection] = useState(false);
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => {
       setUserEmail(data.user?.email ?? null);
+      setFirstName(data.user?.user_metadata?.first_name ?? null);
     });
   }, []);
   const [reflectionDraft, setReflectionDraft] = useState("");
@@ -650,7 +652,7 @@ export function DailyRitual() {
               className="text-2xl font-semibold tracking-tight"
               style={{ color: "var(--text)" }}
             >
-              {greeting}.
+              {greeting}{firstName ? `, ${firstName}` : ""}.
             </h1>
           </div>
           <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>

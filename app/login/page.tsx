@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Sparkles, Mail, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Sparkles, Mail, ArrowRight, CheckCircle2, User } from "lucide-react";
 
 export default function LoginPage() {
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,6 +21,9 @@ export default function LoginPage() {
       email: email.trim(),
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          first_name: firstName.trim() || null,
+        },
       },
     });
 
@@ -29,6 +33,13 @@ export default function LoginPage() {
     } else {
       setSent(true);
     }
+  };
+
+  const inputClass = "w-full pl-9 pr-4 py-3 rounded-xl border text-sm outline-none transition-colors";
+  const inputStyle = {
+    background: "var(--surface)",
+    borderColor: "var(--border)",
+    color: "var(--text)",
   };
 
   return (
@@ -56,20 +67,19 @@ export default function LoginPage() {
         </div>
 
         {sent ? (
-          /* Success state */
           <div
             className="p-6 rounded-2xl border text-center"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
           >
             <CheckCircle2 size={32} className="mx-auto mb-3 text-emerald-400" />
             <h2 className="text-base font-semibold mb-1" style={{ color: "var(--text)" }}>
-              Check your email
+              Check your email{firstName ? `, ${firstName}` : ""}
             </h2>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
               We sent a magic link to <strong>{email}</strong>. Click it to sign in — no password needed.
             </p>
             <button
-              onClick={() => { setSent(false); setEmail(""); }}
+              onClick={() => { setSent(false); setEmail(""); setFirstName(""); }}
               className="mt-4 text-xs"
               style={{ color: "var(--text-dim)" }}
             >
@@ -77,16 +87,35 @@ export default function LoginPage() {
             </button>
           </div>
         ) : (
-          /* Login form */
           <div>
             <h1 className="text-xl font-semibold mb-1" style={{ color: "var(--text)" }}>
               Sign in
             </h1>
             <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
-              Enter your email — we&apos;ll send a magic link. No password needed.
+              Enter your details — we&apos;ll send a magic link. No password needed.
             </p>
 
             <form onSubmit={handleLogin} className="space-y-3">
+              {/* First name */}
+              <div className="relative">
+                <User
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-dim)" }}
+                />
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                  className={inputClass}
+                  style={inputStyle}
+                  onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+                  onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+                />
+              </div>
+
+              {/* Email */}
               <div className="relative">
                 <Mail
                   size={15}
@@ -100,12 +129,8 @@ export default function LoginPage() {
                   placeholder="your@email.com"
                   autoFocus
                   required
-                  className="w-full pl-9 pr-4 py-3 rounded-xl border text-sm outline-none transition-colors"
-                  style={{
-                    background: "var(--surface)",
-                    borderColor: "var(--border)",
-                    color: "var(--text)",
-                  }}
+                  className={inputClass}
+                  style={inputStyle}
                   onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
                   onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                 />
