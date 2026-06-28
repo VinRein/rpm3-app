@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useRPMStore } from "@/lib/store";
 import { PurposePanel } from "./PurposePanel";
 import { MethodPanel } from "./MethodPanel";
@@ -25,9 +26,20 @@ interface ResultViewProps {
 export function ResultView({ resultId }: ResultViewProps) {
   const { results, updateResult, setAIContext, setSidebarOpen } = useRPMStore();
   const result = results.find((r) => r.id === resultId);
-  const [activeStep, setActiveStep] = useState<Step>("purpose");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") as Step | null;
+  const [activeStep, setActiveStep] = useState<Step>(
+    tabParam && STEPS.some((s) => s.id === tabParam) ? tabParam : "purpose"
+  );
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+
+  // Sync if URL param changes (e.g. navigating from Focus 3)
+  useEffect(() => {
+    if (tabParam && STEPS.some((s) => s.id === tabParam)) {
+      setActiveStep(tabParam);
+    }
+  }, [tabParam]);
 
   if (!result) {
     return (
