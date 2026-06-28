@@ -22,6 +22,8 @@ export function ActionsPanel({ resultId }: Props) {
   const [newCategory, setNewCategory] = useState("");
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
+  const [collapsedAreas, setCollapsedAreas] = useState<Set<string>>(new Set());
+  const [allExpanded, setAllExpanded] = useState(false);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
@@ -51,11 +53,37 @@ export function ActionsPanel({ resultId }: Props) {
   });
 
   const toggleExpand = (id: string) => {
-    setExpandedAreas((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
-      return next;
-    });
+    // Individual toggle: track per-area overrides relative to the global state
+    if (allExpanded) {
+      // If globally expanded, toggling an area collapses it individually
+      setCollapsedAreas((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) { next.delete(id); } else { next.add(id); }
+        return next;
+      });
+    } else {
+      setExpandedAreas((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) { next.delete(id); } else { next.add(id); }
+        return next;
+      });
+    }
+  };
+
+  const expandAll = () => {
+    setAllExpanded(true);
+    setCollapsedAreas(new Set());
+  };
+
+  const collapseAll = () => {
+    setAllExpanded(false);
+    setExpandedAreas(new Set());
+    setCollapsedAreas(new Set());
+  };
+
+  const isAreaExpanded = (id: string, isFirst: boolean) => {
+    if (allExpanded) return !collapsedAreas.has(id);
+    return expandedAreas.has(id) || isFirst;
   };
 
   const toggleDescription = (id: string) => {
@@ -157,13 +185,39 @@ export function ActionsPanel({ resultId }: Props) {
         </div>
       )}
 
-      <div>
-        <h2 className="text-base font-semibold mb-1" style={{ color: "var(--text)" }}>
-          What actions could move this forward?
-        </h2>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          Brain dump first — capture everything. Then categorize. Then select your Focus 3.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold mb-1" style={{ color: "var(--text)" }}>
+            What actions could move this forward?
+          </h2>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            Brain dump first — capture everything. Then categorize. Then select your Focus 3.
+          </p>
+        </div>
+        <div className="flex items-center gap-1 shrink-0 mt-0.5">
+          <button
+            onClick={expandAll}
+            className="text-xs px-2.5 py-1.5 rounded-lg border transition-colors"
+            style={{
+              borderColor: allExpanded ? "var(--accent)" : "var(--border)",
+              color: allExpanded ? "var(--accent)" : "var(--text-dim)",
+              background: allExpanded ? "var(--accent-glow)" : "transparent",
+            }}
+          >
+            Expand all
+          </button>
+          <button
+            onClick={collapseAll}
+            className="text-xs px-2.5 py-1.5 rounded-lg border transition-colors"
+            style={{
+              borderColor: "var(--border)",
+              color: "var(--text-dim)",
+              background: "transparent",
+            }}
+          >
+            Collapse all
+          </button>
+        </div>
       </div>
 
       {/* Area selector */}
@@ -204,7 +258,7 @@ export function ActionsPanel({ resultId }: Props) {
       {/* Actions per area */}
       {sorted.map((area) => {
         const sortedActions = [...area.actions].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-        const isExpanded = expandedAreas.has(area.id) || area.id === sorted[0]?.id;
+        const isExpanded = isAreaExpanded(area.id, area.id === sorted[0]?.id);
         const totalDone = area.actions.filter((a) => a.completed).length;
 
         return (
