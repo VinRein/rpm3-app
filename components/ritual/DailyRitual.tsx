@@ -11,8 +11,10 @@ import {
   Target,
   Sparkles,
   ChevronRight,
+  ChevronDown,
   X,
   LogOut,
+  AlignLeft,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -204,7 +206,9 @@ function PriorityCard({
   action,
   resultTitle,
   resultColor,
+  resultId,
   areaTitle,
+  areaId,
   isCompleted,
   allOptions,
   assignedIds,
@@ -213,10 +217,12 @@ function PriorityCard({
   onClear,
 }: {
   priority: PriorityLevel;
-  action: { id: string; title: string } | null;
+  action: { id: string; title: string; description?: string } | null;
   resultTitle?: string;
   resultColor?: string;
+  resultId?: string;
   areaTitle?: string;
+  areaId?: string;
   isCompleted: boolean;
   allOptions: ActionOption[];
   assignedIds: Set<string>;
@@ -225,6 +231,7 @@ function PriorityCard({
   onClear: () => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
   const cfg = PRIORITY_CONFIG[priority];
 
   // Completed state — show celebration + option to pick next
@@ -298,60 +305,91 @@ function PriorityCard({
     // Filled, not completed
     return (
       <div
-        className="flex items-start gap-4 p-4 rounded-xl border transition-all duration-200"
+        className="p-4 rounded-xl border transition-all duration-200"
         style={{ background: cfg.bg, borderColor: cfg.border }}
       >
-        {/* Priority badge */}
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-semibold shrink-0 mt-0.5"
-          style={{ background: cfg.color, color: "#fff" }}
-        >
-          {priority}
-        </div>
+        <div className="flex items-start gap-4">
+          {/* Priority badge */}
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-semibold shrink-0 mt-0.5"
+            style={{ background: cfg.color, color: "#fff" }}
+          >
+            {priority}
+          </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm leading-snug" style={{ color: "var(--text)" }}>
-            {action.title}
-          </p>
-          {resultTitle && (
-            <div className="flex items-center gap-1.5 mt-1" style={{ color: "var(--text-dim)" }}>
-              <span
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ background: resultColor ?? cfg.color }}
-              />
-              <span className="text-xs truncate">
-                {resultTitle}
-                {areaTitle && (
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-sm leading-snug" style={{ color: "var(--text)" }}>
+              {action.title}
+            </p>
+            {resultTitle && (
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ background: resultColor ?? cfg.color }}
+                />
+                <span className="text-xs" style={{ color: "var(--text-dim)" }}>{resultTitle}</span>
+                {areaTitle && resultId && areaId && (
                   <>
-                    <span className="mx-1 opacity-40">→</span>
-                    {areaTitle}
+                    <span className="text-xs opacity-40" style={{ color: "var(--text-dim)" }}>→</span>
+                    <Link
+                      href={`/result/${resultId}?tab=actions&area=${areaId}`}
+                      className="text-xs underline underline-offset-2 transition-opacity hover:opacity-80"
+                      style={{ color: cfg.color }}
+                    >
+                      {areaTitle}
+                    </Link>
                   </>
                 )}
-              </span>
+                <button
+                  onClick={onClear}
+                  className="ml-1 text-xs opacity-0 hover:opacity-100 transition-opacity shrink-0"
+                  style={{ color: "var(--text-dim)" }}
+                >
+                  change
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Description toggle + Complete button */}
+          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+            {action.description && (
               <button
-                onClick={onClear}
-                className="ml-1 opacity-0 hover:opacity-100 transition-opacity shrink-0 text-xs"
-                style={{ color: "var(--text-dim)" }}
+                onClick={() => setDescExpanded((v) => !v)}
+                title="Toggle description"
+                style={{ color: descExpanded ? cfg.color : "var(--text-dim)" }}
               >
-                change
+                {descExpanded ? <ChevronDown size={15} /> : <AlignLeft size={15} />}
               </button>
-            </div>
-          )}
+            )}
+            <button
+              onClick={onComplete}
+              className="rounded-full flex items-center justify-center transition-all duration-200"
+              style={{
+                width: 26,
+                height: 26,
+                border: `1.5px solid ${cfg.border}`,
+                background: "transparent",
+              }}
+              title="Mark complete"
+            />
+          </div>
         </div>
 
-        {/* Complete button */}
-        <button
-          onClick={onComplete}
-          className="shrink-0 mt-0.5 rounded-full flex items-center justify-center transition-all duration-200"
-          style={{
-            width: 26,
-            height: 26,
-            border: `1.5px solid ${cfg.border}`,
-            background: "transparent",
-          }}
-          title="Mark complete"
-        />
+        {/* Expandable description */}
+        {descExpanded && action.description && (
+          <div
+            className="mt-3 ml-[52px] text-xs leading-relaxed rounded-lg px-3 py-2"
+            style={{
+              color: "var(--text-muted)",
+              background: "rgba(0,0,0,0.15)",
+              borderLeft: `2px solid ${cfg.color}`,
+            }}
+          >
+            {action.description}
+          </div>
+        )}
       </div>
     );
   }
@@ -480,7 +518,9 @@ export function DailyRitual() {
       action,
       resultTitle: result?.title,
       resultColor: result?.color,
+      resultId: result?.id,
       areaTitle: area?.title,
+      areaId: area?.id,
     };
   };
 
@@ -709,7 +749,9 @@ export function DailyRitual() {
                   action={slot?.action ?? null}
                   resultTitle={slot?.resultTitle}
                   resultColor={slot?.resultColor}
+                  resultId={slot?.resultId}
                   areaTitle={slot?.areaTitle}
+                  areaId={slot?.areaId}
                   isCompleted={isCompleted}
                   allOptions={allOptions}
                   assignedIds={assignedIds}

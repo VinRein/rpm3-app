@@ -6,7 +6,7 @@ import { Input, Textarea } from "@/components/ui/Input";
 import type { MethodPath } from "@/lib/types";
 import {
   Plus, Check, Trash2, Zap, ArrowRight,
-  Shield, TrendingUp, Settings, GripVertical,
+  Shield, TrendingUp, Settings, GripVertical, Pencil, X,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -36,10 +36,14 @@ interface Props {
 }
 
 export function MethodPanel({ resultId }: Props) {
-  const { results, addMethod, selectMethod, deleteMethod, reorderMethods } = useRPMStore();
+  const { results, addMethod, updateMethod, selectMethod, deleteMethod, reorderMethods } = useRPMStore();
   const result = results.find((r) => r.id === resultId);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+
+  // Editing state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
 
   // Drag state
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -61,6 +65,33 @@ export function MethodPanel({ resultId }: Props) {
     });
     setForm(EMPTY_FORM);
     setAdding(false);
+  };
+
+  const startEdit = (methodId: string) => {
+    const m = result.methods.find((m) => m.id === methodId);
+    if (!m) return;
+    setEditForm({
+      title: m.title,
+      description: m.description ?? "",
+      path: m.path,
+      constraints: m.constraints ?? "",
+      risks: m.risks ?? "",
+      successCriteria: m.successCriteria ?? "",
+    });
+    setEditingId(methodId);
+  };
+
+  const saveEdit = () => {
+    if (!editingId || !editForm.title.trim()) return;
+    updateMethod(resultId, editingId, {
+      title: editForm.title.trim(),
+      description: editForm.description.trim(),
+      path: editForm.path,
+      constraints: editForm.constraints.trim(),
+      risks: editForm.risks.trim(),
+      successCriteria: editForm.successCriteria.trim(),
+    });
+    setEditingId(null);
   };
 
   const handleDrop = (toIndex: number) => {
@@ -90,12 +121,13 @@ export function MethodPanel({ resultId }: Props) {
           const pathInfo = PATH_OPTIONS.find((p) => p.value === method.path);
           const isDragging = dragIndex === i;
           const isOver = dragOverIndex === i && dragIndex !== i;
+          const isEditing = editingId === method.id;
 
           return (
             <div
               key={method.id}
-              draggable
-              onDragStart={() => setDragIndex(i)}
+              draggable={!isEditing}
+              onDragStart={() => !isEditing && setDragIndex(i)}
               onDragOver={(e) => { e.preventDefault(); setDragOverIndex(i); }}
               onDrop={() => handleDrop(i)}
               onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
@@ -107,82 +139,172 @@ export function MethodPanel({ resultId }: Props) {
               )}
               style={{
                 background: method.selected ? "var(--accent-glow)" : "var(--surface)",
-                cursor: "grab",
+                cursor: isEditing ? "default" : "grab",
               }}
             >
               {/* Drag handle */}
-              <div className="mt-1 shrink-0 cursor-grab" style={{ color: "var(--text-dim)" }}>
-                <GripVertical size={14} />
-              </div>
+              {!isEditing && (
+                <div className="mt-1 shrink-0 cursor-grab" style={{ color: "var(--text-dim)" }}>
+                  <GripVertical size={14} />
+                </div>
+              )}
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span
-                    className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                    style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}
-                  >
-                    {pathInfo?.icon}
-                    {pathInfo?.label}
-                  </span>
-                  {method.selected && (
-                    <span className="text-xs font-medium" style={{ color: "var(--C)" }}>
-                      ✓ Selected
-                    </span>
-                  )}
-                </div>
-                <h4 className="font-medium text-sm" style={{ color: "var(--text)" }}>
-                  {method.title}
-                </h4>
-                {method.description && (
-                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                    {method.description}
-                  </p>
-                )}
-                {(method.constraints || method.risks || method.successCriteria) && (
-                  <div className="mt-2 space-y-0.5">
-                    {method.constraints && (
-                      <p className="text-xs" style={{ color: "var(--text-dim)" }}>
-                        <span className="font-medium">Constraints:</span> {method.constraints}
+                {isEditing ? (
+                  /* ── Edit form ── */
+                  <div className="space-y-3">
+                    {/* Path selector */}
+                    <div>
+                      <p className="text-xs font-medium mb-2 uppercase tracking-wider" style={{ color: "var(--text-dim)" }}>
+                        Strategy type
                       </p>
-                    )}
-                    {method.risks && (
-                      <p className="text-xs" style={{ color: "var(--text-dim)" }}>
-                        <span className="font-medium">Risks:</span> {method.risks}
-                      </p>
-                    )}
-                    {method.successCriteria && (
-                      <p className="text-xs" style={{ color: "var(--text-dim)" }}>
-                        <span className="font-medium">Success:</span> {method.successCriteria}
-                      </p>
-                    )}
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {PATH_OPTIONS.map((p) => (
+                          <button
+                            key={p.value}
+                            onClick={() => setEditForm((f) => ({ ...f, path: p.value }))}
+                            className={clsx(
+                              "flex flex-col items-start p-2.5 rounded-lg border text-left transition-all",
+                              editForm.path === p.value
+                                ? "border-[var(--accent)] bg-[var(--accent-glow)]"
+                                : "border-[var(--border)] hover:border-[var(--accent)]/40"
+                            )}
+                          >
+                            <span style={{ color: editForm.path === p.value ? "var(--accent)" : "var(--text-muted)" }}>
+                              {p.icon}
+                            </span>
+                            <span className="text-xs font-medium mt-1" style={{ color: "var(--text)" }}>
+                              {p.label}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <Input
+                      label="Method title"
+                      value={editForm.title}
+                      onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                      autoFocus
+                    />
+                    <Textarea
+                      label="Description"
+                      value={editForm.description}
+                      onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                      rows={2}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <Input
+                        label="Constraints"
+                        value={editForm.constraints}
+                        onChange={(e) => setEditForm((f) => ({ ...f, constraints: e.target.value }))}
+                      />
+                      <Input
+                        label="Risks"
+                        value={editForm.risks}
+                        onChange={(e) => setEditForm((f) => ({ ...f, risks: e.target.value }))}
+                      />
+                      <Input
+                        label="Success criteria"
+                        value={editForm.successCriteria}
+                        onChange={(e) => setEditForm((f) => ({ ...f, successCriteria: e.target.value }))}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="primary" size="sm" onClick={saveEdit} disabled={!editForm.title.trim()}>
+                        Save
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
+                ) : (
+                  /* ── Display ── */
+                  <>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                        style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}
+                      >
+                        {pathInfo?.icon}
+                        {pathInfo?.label}
+                      </span>
+                      {method.selected && (
+                        <span className="text-xs font-medium" style={{ color: "var(--C)" }}>
+                          ✓ Selected
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="font-medium text-sm" style={{ color: "var(--text)" }}>
+                      {method.title}
+                    </h4>
+                    {method.description && (
+                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                        {method.description}
+                      </p>
+                    )}
+                    {(method.constraints || method.risks || method.successCriteria) && (
+                      <div className="mt-2 space-y-0.5">
+                        {method.constraints && (
+                          <p className="text-xs" style={{ color: "var(--text-dim)" }}>
+                            <span className="font-medium">Constraints:</span> {method.constraints}
+                          </p>
+                        )}
+                        {method.risks && (
+                          <p className="text-xs" style={{ color: "var(--text-dim)" }}>
+                            <span className="font-medium">Risks:</span> {method.risks}
+                          </p>
+                        )}
+                        {method.successCriteria && (
+                          <p className="text-xs" style={{ color: "var(--text-dim)" }}>
+                            <span className="font-medium">Success:</span> {method.successCriteria}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
-              <div className="flex items-center gap-1 shrink-0">
-                <Button
-                  variant={method.selected ? "ghost" : "outline"}
-                  size="sm"
-                  onClick={() => selectMethod(resultId, method.id)}
-                  title={method.selected ? "Deselect" : "Select as active method"}
-                >
-                  <Check size={12} />
-                  {method.selected ? "Deselect" : "Select"}
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => deleteMethod(resultId, method.id)}
-                >
-                  <Trash2 size={12} />
-                </Button>
-              </div>
+              {!isEditing && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => startEdit(method.id)}
+                    title="Edit"
+                  >
+                    <Pencil size={12} />
+                  </Button>
+                  <Button
+                    variant={method.selected ? "ghost" : "outline"}
+                    size="sm"
+                    onClick={() => selectMethod(resultId, method.id)}
+                    title={method.selected ? "Deselect" : "Select as active method"}
+                  >
+                    <Check size={12} />
+                    {method.selected ? "Deselect" : "Select"}
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => deleteMethod(resultId, method.id)}
+                  >
+                    <Trash2 size={12} />
+                  </Button>
+                </div>
+              )}
+
+              {isEditing && (
+                <button onClick={() => setEditingId(null)} className="shrink-0 ml-2 mt-0.5" style={{ color: "var(--text-dim)" }}>
+                  <X size={14} />
+                </button>
+              )}
             </div>
           );
         })}
       </div>
 
-      {/* Drop zone indicator when dragging over empty space */}
       {dragIndex !== null && (
         <div
           className="h-1 rounded-full transition-all"

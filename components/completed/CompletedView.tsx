@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRPMStore } from "@/lib/store";
-import { CheckSquare, ChevronDown, ChevronRight, Calendar, StickyNote, Check } from "lucide-react";
+import { CheckSquare, ChevronDown, ChevronRight, Calendar, StickyNote, Check, RotateCcw, Trash2 } from "lucide-react";
 
 interface CompletedAction {
   id: string;
@@ -11,10 +11,11 @@ interface CompletedAction {
   resultTitle: string;
   areaTitle: string;
   resultId: string;
+  areaId: string;
 }
 
 export function CompletedView() {
-  const { results, focus3History, setFocusReflection } = useRPMStore();
+  const { results, focus3History, setFocusReflection, toggleActionComplete, deleteAction } = useRPMStore();
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [editingReflection, setEditingReflection] = useState<string | null>(null);
   const [reflectionDraft, setReflectionDraft] = useState("");
@@ -33,6 +34,7 @@ export function CompletedView() {
             resultTitle: result.title,
             areaTitle: area.title,
             resultId: result.id,
+            areaId: area.id,
           });
         }
       }
@@ -155,7 +157,7 @@ export function CompletedView() {
                   {/* Task list */}
                   <div className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
                     {actions.map((action) => (
-                      <div key={action.id} className="px-4 py-3 flex items-start gap-3">
+                      <div key={action.id} className="px-4 py-3 flex items-start gap-3 group">
                         <div className="shrink-0 mt-0.5 w-4 h-4 rounded flex items-center justify-center"
                           style={{ background: "var(--accent-glow)", border: "1px solid var(--accent)" }}>
                           <Check size={10} style={{ color: "var(--accent)" }} />
@@ -172,6 +174,25 @@ export function CompletedView() {
                               {action.description}
                             </p>
                           )}
+                        </div>
+                        {/* Uncheck + Delete — visible on hover */}
+                        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => toggleActionComplete(action.resultId, action.areaId, action.id)}
+                            className="p-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors"
+                            title="Mark as not completed"
+                            style={{ color: "var(--text-dim)" }}
+                          >
+                            <RotateCcw size={12} />
+                          </button>
+                          <button
+                            onClick={() => deleteAction(action.resultId, action.areaId, action.id)}
+                            className="p-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors"
+                            title="Delete task"
+                            style={{ color: "var(--text-dim)" }}
+                          >
+                            <Trash2 size={12} />
+                          </button>
                         </div>
                       </div>
                     ))}

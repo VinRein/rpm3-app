@@ -1,5 +1,11 @@
+"use client";
+import { AppShell } from "@/components/layout/AppShell";
 import { CompletedView } from "@/components/completed/CompletedView";
 
 export default function CompletedPage() {
-  return <CompletedView />;
+  return (
+    <AppShell>
+      <CompletedView />
+    </AppShell>
+  );
 }
