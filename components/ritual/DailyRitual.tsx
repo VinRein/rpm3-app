@@ -49,25 +49,28 @@ function formatDate(): string {
 
 const PRIORITY_CONFIG: Record<
   PriorityLevel,
-  { color: string; bg: string; border: string; sublabel: string }
+  { color: string; bg: string; border: string; sublabel: string; question: string }
 > = {
   A: {
     color: "var(--A)",
     bg: "rgba(245,158,11,0.08)",
     border: "rgba(245,158,11,0.28)",
-    sublabel: "Most important",
+    sublabel: "Must do today — if nothing else",
+    question: "What single action, if done today, would create the most momentum toward one of your results?",
   },
   B: {
     color: "var(--B)",
     bg: "rgba(99,102,241,0.08)",
     border: "rgba(99,102,241,0.28)",
-    sublabel: "Second priority",
+    sublabel: "Do this if A is done",
+    question: "What's the highest-leverage action you'd focus on next — for any of your results?",
   },
   C: {
     color: "var(--C)",
     bg: "rgba(16,185,129,0.08)",
     border: "rgba(16,185,129,0.28)",
-    sublabel: "Third priority",
+    sublabel: "Do this if B is done",
+    question: "What else would meaningfully move any of your results forward today?",
   },
 };
 
@@ -79,12 +82,14 @@ function ActionPicker({
   onSelect,
   onClose,
   accentColor,
+  question,
 }: {
   options: ActionOption[];
   assigned: Set<string>;
   onSelect: (opt: ActionOption) => void;
   onClose: () => void;
   accentColor: string;
+  question: string;
 }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -150,8 +155,19 @@ function ActionPicker({
         </button>
       </div>
 
+      {/* Leverage guidance */}
+      <div
+        className="px-3 py-2 border-b flex items-start gap-2"
+        style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
+      >
+        <span style={{ color: accentColor, fontSize: 13, lineHeight: 1.4 }}>⚡</span>
+        <p className="text-xs leading-relaxed italic" style={{ color: "var(--text-muted)" }}>
+          {question}
+        </p>
+      </div>
+
       {/* Options */}
-      <div className="overflow-y-auto" style={{ maxHeight: "220px" }}>
+      <div className="overflow-y-auto" style={{ maxHeight: "200px" }}>
         {Object.keys(grouped).length === 0 ? (
           <p className="px-4 py-4 text-sm" style={{ color: "var(--text-muted)" }}>
             {options.length === 0
@@ -290,6 +306,7 @@ function PriorityCard({
             options={allOptions}
             assigned={assignedIds}
             accentColor={cfg.color}
+            question={cfg.question}
             onSelect={(opt) => {
               onAssign(opt);
               setPickerOpen(false);
@@ -439,6 +456,7 @@ function PriorityCard({
           options={allOptions}
           assigned={assignedIds}
           accentColor={cfg.color}
+          question={cfg.question}
           onSelect={(opt) => {
             onAssign(opt);
             setPickerOpen(false);
