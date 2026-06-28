@@ -10,11 +10,13 @@ import {
   Archive,
   ChevronRight,
   X,
+  CheckSquare,
 } from "lucide-react";
 
 const NAV = [
   { href: "/plan", label: "Dashboard", icon: LayoutDashboard },
   { href: "/", label: "Today's Focus 3", icon: Zap },
+  { href: "/completed", label: "Completed", icon: CheckSquare },
 ];
 
 interface SidebarProps {

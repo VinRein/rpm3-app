@@ -56,6 +56,8 @@ interface RPMState {
   updateAction: (resultId: string, areaId: string, actionId: string, patch: Partial<MassiveAction>) => void;
   deleteAction: (resultId: string, areaId: string, actionId: string) => void;
   toggleActionComplete: (resultId: string, areaId: string, actionId: string) => void;
+  reorderActions: (resultId: string, areaId: string, orderedIds: string[]) => void;
+  reorderResults: (orderedIds: string[]) => void;
 
   // Focus 3
   getTodayFocus3: () => Focus3Entry;
@@ -325,12 +327,16 @@ export const useRPMStore = create<RPMState>()(
 
       // ── Actions ──────────────────────────────────────────────────────────
       addAction: (resultId, areaId, title, category) => {
+        const area = get().results.find((r) => r.id === resultId)?.areas.find((a) => a.id === areaId);
+        const order = area ? area.actions.length : 0;
         const action: MassiveAction = {
           id: uuid(),
           areaId,
           title,
           category,
           completed: false,
+          completedAt: null,
+          order,
           focusPriority: null,
           focusDate: null,
         };
@@ -399,9 +405,15 @@ export const useRPMStore = create<RPMState>()(
                     a.id === areaId
                       ? {
                           ...a,
-                          actions: a.actions.map((ac) =>
-                            ac.id === actionId ? { ...ac, completed: !ac.completed } : ac
-                          ),
+                          actions: a.actions.map((ac) => {
+                            if (ac.id !== actionId) return ac;
+                            const nowCompleted = !ac.completed;
+                            return {
+                              ...ac,
+                              completed: nowCompleted,
+                              completedAt: nowCompleted ? new Date().toISOString().slice(0, 10) : null,
+                            };
+                          }),
                         }
                       : a
                   ),
@@ -410,6 +422,35 @@ export const useRPMStore = create<RPMState>()(
               : r
           ),
         })),
+
+      reorderActions: (resultId, areaId, orderedIds) =>
+        set((s) => ({
+          results: s.results.map((r) => {
+            if (r.id !== resultId) return r;
+            return {
+              ...r,
+              areas: r.areas.map((a) => {
+                if (a.id !== areaId) return a;
+                const reordered = orderedIds
+                  .map((id, i) => {
+                    const ac = a.actions.find((ac) => ac.id === id);
+                    return ac ? { ...ac, order: i } : null;
+                  })
+                  .filter(Boolean) as MassiveAction[];
+                return { ...a, actions: reordered };
+              }),
+              updatedAt: now(),
+            };
+          }),
+        })),
+
+      reorderResults: (orderedIds) =>
+        set((s) => {
+          const reordered = orderedIds
+            .map((id) => s.results.find((r) => r.id === id))
+            .filter(Boolean) as Result[];
+          return { results: reordered };
+        }),
 
       // ── Focus 3 ──────────────────────────────────────────────────────────
       getTodayFocus3: () => {

@@ -25,10 +25,13 @@ export interface Method {
 
 export interface MassiveAction {
   id: string;
-  areaId: string; // formerly milestoneId
+  areaId: string;
   title: string;
+  description?: string;
   category?: string;
   completed: boolean;
+  completedAt?: string | null;
+  order: number;
   focusPriority?: PriorityLevel | null;
   focusDate?: string | null;
 }
