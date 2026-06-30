@@ -328,39 +328,57 @@ export function ActionsPanel({ resultId }: Props) {
                           </span>
                         )}
 
-                        {priority && !isEditing && <Badge label={priority} variant={priority} />}
-
-                        {/* Hover actions */}
+                        {/* Hover-only actions */}
                         {isEditing ? (
                           <div className="flex items-center gap-1">
                             <button onClick={() => saveEdit(area.id, action.id)}><Check size={13} className="text-emerald-400" /></button>
                             <button onClick={() => setEditingActionId(null)}><X size={13} style={{ color: "var(--text-dim)" }} /></button>
                           </div>
                         ) : (
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                            {/* Description toggle */}
-                            <button onClick={() => toggleDescription(action.id)} title="Description">
-                              <AlignLeft size={11} style={{ color: descExpanded ? "var(--accent)" : "var(--text-dim)" }} />
-                            </button>
-                            <button onClick={() => startEdit(action.id, action.title)} title="Edit title">
-                              <Pencil size={11} style={{ color: "var(--text-dim)" }} />
-                            </button>
-                            {(["A", "B", "C"] as PriorityLevel[]).map((p) => {
-                              const taken = todayFocus[p] && todayFocus[p]?.actionId !== action.id;
-                              return (
-                                <button key={p} disabled={!!taken}
-                                  onClick={() => priority === p ? assignFocus(action.id, area.id, null) : assignFocus(action.id, area.id, p)}
-                                  className={clsx("w-5 h-5 rounded text-xs font-bold transition-all", taken && "opacity-20 cursor-not-allowed")}
-                                  style={priority !== p ? { background: "var(--surface-3)", color: "var(--text-dim)" } : { background: "var(--A)", color: "#fff" }}
-                                  title={`Set as ${p} priority`}>
-                                  {p}
-                                </button>
-                              );
-                            })}
-                            <button onClick={() => deleteAction(resultId, area.id, action.id)} className="ml-1">
-                              <Trash2 size={12} style={{ color: "var(--text-dim)" }} />
-                            </button>
-                          </div>
+                          <>
+                            {/* A/B/C priority buttons — always visible */}
+                            <div className="flex items-center gap-0.5 shrink-0">
+                              {(["A", "B", "C"] as PriorityLevel[]).map((p) => {
+                                const isActive = priority === p;
+                                const taken = todayFocus[p] && todayFocus[p]?.actionId !== action.id;
+                                const colors: Record<PriorityLevel, string> = {
+                                  A: "var(--A)", B: "var(--B)", C: "var(--C)",
+                                };
+                                return (
+                                  <button
+                                    key={p}
+                                    disabled={!!taken}
+                                    onClick={() => isActive ? assignFocus(action.id, area.id, null) : assignFocus(action.id, area.id, p)}
+                                    className={clsx(
+                                      "w-5 h-5 rounded text-xs font-bold transition-all",
+                                      taken ? "opacity-15 cursor-not-allowed" : "hover:opacity-100",
+                                      !isActive && !taken && "opacity-25"
+                                    )}
+                                    style={isActive
+                                      ? { background: colors[p], color: "#fff" }
+                                      : { background: "var(--surface-3)", color: colors[p] }
+                                    }
+                                    title={isActive ? `Remove ${p} priority` : `Set as ${p} priority`}
+                                  >
+                                    {p}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Other hover-only actions */}
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                              <button onClick={() => toggleDescription(action.id)} title="Description">
+                                <AlignLeft size={11} style={{ color: descExpanded ? "var(--accent)" : "var(--text-dim)" }} />
+                              </button>
+                              <button onClick={() => startEdit(action.id, action.title)} title="Edit title">
+                                <Pencil size={11} style={{ color: "var(--text-dim)" }} />
+                              </button>
+                              <button onClick={() => deleteAction(resultId, area.id, action.id)} className="ml-1">
+                                <Trash2 size={12} style={{ color: "var(--text-dim)" }} />
+                              </button>
+                            </div>
+                          </>
                         )}
                       </div>
 

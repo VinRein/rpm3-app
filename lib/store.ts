@@ -455,7 +455,31 @@ export const useRPMStore = create<RPMState>()(
       // ── Focus 3 ──────────────────────────────────────────────────────────
       getTodayFocus3: () => {
         const d = new Date().toISOString().slice(0, 10);
-        return get().focus3History.find((f) => f.date === d) ?? { date: d };
+        const state = get();
+        const todayEntry = state.focus3History.find((f) => f.date === d) ?? { date: d };
+
+        // Carry over incomplete slots from the most recent past entry
+        const pastEntry = state.focus3History
+          .filter((f) => f.date < d)
+          .sort((a, b) => b.date.localeCompare(a.date))[0];
+
+        if (!pastEntry) return todayEntry;
+
+        const result = { ...todayEntry };
+        for (const p of ["A", "B", "C"] as ("A" | "B" | "C")[]) {
+          // Only carry over if today's slot is not explicitly set
+          if (result[p] !== undefined) continue;
+          const ref = pastEntry[p];
+          if (!ref) continue;
+          // Only carry over if the action still exists and is not completed
+          const r = state.results.find((r) => r.id === ref.resultId);
+          const area = r?.areas.find((a) => a.id === ref.areaId);
+          const action = area?.actions.find((a) => a.id === ref.actionId);
+          if (action && !action.completed) {
+            result[p] = ref;
+          }
+        }
+        return result;
       },
 
       setFocusPriority: (date, priority, ref) =>
