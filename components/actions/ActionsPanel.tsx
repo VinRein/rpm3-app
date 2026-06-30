@@ -123,12 +123,13 @@ export function ActionsPanel({ resultId }: Props) {
   };
 
   const assignFocus = (actionId: string, areaId: string, priority: PriorityLevel | null) => {
+    // Always clear any slot this action currently holds
+    (["A", "B", "C"] as PriorityLevel[]).forEach((p) => {
+      if (todayFocus[p]?.actionId === actionId) setFocusPriority(today, p, null);
+    });
+    // Then set the new priority (if not just clearing)
     if (priority) {
       setFocusPriority(today, priority, { actionId, areaId, resultId });
-    } else {
-      (["A", "B", "C"] as PriorityLevel[]).forEach((p) => {
-        if (todayFocus[p]?.actionId === actionId) setFocusPriority(today, p, null);
-      });
     }
   };
 
@@ -303,7 +304,7 @@ export function ActionsPanel({ resultId }: Props) {
                       {/* Main row */}
                       <div className={clsx("flex items-center gap-2.5 p-2.5 group", action.completed ? "opacity-50" : "")}>
                         {/* Drag handle */}
-                        <div className="cursor-grab shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        <div className="cursor-grab shrink-0 opacity-25 hover:opacity-100 transition-opacity"
                           style={{ color: "var(--text-dim)" }}>
                           <GripVertical size={13} />
                         </div>
@@ -366,16 +367,28 @@ export function ActionsPanel({ resultId }: Props) {
                               })}
                             </div>
 
-                            {/* Other hover-only actions */}
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                              <button onClick={() => toggleDescription(action.id)} title="Description">
-                                <AlignLeft size={11} style={{ color: descExpanded ? "var(--accent)" : "var(--text-dim)" }} />
+                            {/* Always-visible secondary actions */}
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => toggleDescription(action.id)}
+                                title="Description"
+                                className="opacity-30 hover:opacity-100 transition-opacity"
+                              >
+                                <AlignLeft size={13} style={{ color: descExpanded ? "var(--accent)" : "var(--text-dim)" }} />
                               </button>
-                              <button onClick={() => startEdit(action.id, action.title)} title="Edit title">
-                                <Pencil size={11} style={{ color: "var(--text-dim)" }} />
+                              <button
+                                onClick={() => startEdit(action.id, action.title)}
+                                title="Edit"
+                                className="opacity-30 hover:opacity-100 transition-opacity"
+                              >
+                                <Pencil size={13} style={{ color: "var(--text-dim)" }} />
                               </button>
-                              <button onClick={() => deleteAction(resultId, area.id, action.id)} className="ml-1">
-                                <Trash2 size={12} style={{ color: "var(--text-dim)" }} />
+                              <button
+                                onClick={() => deleteAction(resultId, area.id, action.id)}
+                                title="Delete"
+                                className="opacity-30 hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 size={13} style={{ color: "var(--text-dim)" }} />
                               </button>
                             </div>
                           </>
